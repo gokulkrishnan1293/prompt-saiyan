@@ -16,7 +16,7 @@ async function callMcpServer(initialPrompt: string, workspaceInfo: WorkspaceInfo
     try {
         const response = await axios.post(mcpUrl, {
             raw_prompt: initialPrompt,
-            workspace_info: workspaceInfo.project_type, // Send the structured workspace info
+            workspace_info: workspaceInfo, // Send the structured workspace info
             language: languageId // Pass language if available
         });
 
