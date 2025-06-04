@@ -1,0 +1,104 @@
+/* media/styles.css */
+body {
+    font-family: var(--vscode-font-family);
+    color: var(--vscode-editor-foreground);
+    background-color: var(--vscode-sideBar-background);
+    padding: 10px;
+}
+
+h2 {
+    color: var(--vscode-editor-foreground);
+    border-bottom: 1px solid var(--vscode-editorWidget-border);
+    padding-bottom: 5px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"] {
+    width: calc(100% - 22px); /* Account for padding and border */
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 3px;
+}
+
+button {
+    padding: 8px 15px;
+    border: 1px solid var(--vscode-button-border, var(--vscode-button-background));
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    cursor: pointer;
+    border-radius: 3px;
+    margin-top: 5px;
+    margin-right: 5px;
+}
+
+button:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--vscode-editorWidget-border);
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+#historyContainer {
+    margin-top: 10px;
+    max-height: 400px; /* Or adjust as needed */
+    overflow-y: auto;
+    border: 1px solid var(--vscode-editorWidget-border);
+    padding: 10px;
+    background-color: var(--vscode-editor-background);
+}
+
+.history-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.history-entry {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--vscode-editorWidget-border);
+}
+
+.history-entry:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.prompt-section, .response-section {
+    margin-bottom: 5px;
+}
+
+.prompt-section strong, .response-section strong {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--vscode-editor-foreground); /* Ensure headers are visible */
+}
+
+pre {
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+    background-color: var(--vscode-textCodeBlock-background, var(--vscode-editor-background));
+    padding: 8px;
+    border-radius: 3px;
+    font-family: var(--vscode-editor-font-family); /* Use editor font for code blocks */
+    font-size: var(--vscode-editor-font-size);
+    color: var(--vscode-editor-foreground); /* Ensure text in pre is visible */
+}

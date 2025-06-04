@@ -1,0 +1,124 @@
+{
+  "name": "promptsaiyan",
+  "displayName": "Prompt Saiyan",
+  "description": "Level up your AI interactions with Prompt Saiyan — the ultimate tool to supercharge your prompts and go Ultra Instinct with your productivity",
+  "publisher": "gokul", 
+  "version": "0.0.1",
+  "repository": { // ADD YOUR REPOSITORY URL
+    "type": "git",
+    "url": "https://github.com/your-username/promptsaiyan.git"
+  },
+  "homepage": "https://github.com/your-username/promptsaiyan#readme", // ADD YOUR HOMEPAGE
+  "bugs": {
+    "url": "https://github.com/your-username/promptsaiyan/issues" // ADD YOUR BUG TRACKER
+  },
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "AI",
+    "Chat"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "promptsaiyan-sidebar-view-container",
+          "title": "Prompt Saiyan",
+          "icon": "dist/media/saiyan-icon.png"
+        }
+      ]
+    },
+    "views": {
+      "promptsaiyan-sidebar-view-container": [
+        {
+          "id": "promptsaiyan.sidebarView",
+          "name": "Settings & History",
+          "type": "webview",
+          "contextualTitle": "Prompt Saiyan",
+          "icon": "dist/media/saiyan-icon.png"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "promptsaiyan.openSettings",
+        "title": "Prompt Saiyan: Open MCP Server Settings",
+        "category": "Prompt Saiyan"
+      }
+    ],
+    "configuration": {
+      "title": "Prompt Saiyan",
+      "properties": {
+        "promptsaiyan.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8001/enrich",
+          "description": "URL of the MCP backend server endpoint for enrichment."
+        }
+      }
+    },
+    "languageModelTools": [
+      {
+        "name": "promptsaiyan",
+        "tags": [
+          "prompt",
+          "editing",
+          "tools",
+          "agent"
+        ],
+        "toolReferenceName": "promptsaiyan",
+        "displayName": "Prompt Saiyan Tools",
+        "modelDescription": "Supercharge your prompts and go Ultra Instinct with your productivity",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "promptText": {
+              "type": "string",
+              "description": "The prompt text to improve"
+            }
+          },
+          "required": [
+            "promptText"
+          ]
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.100.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.3",
+    "eslint": "^9.25.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.3",
+    "fs-extra": "^11.2.0",
+    "@types/fs-extra": "^11.0.4"
+  },
+  "dependencies": {
+    "axios": "^1.9.0"
+  }
+}

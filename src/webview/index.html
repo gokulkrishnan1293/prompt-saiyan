@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src 'nonce-{{nonce}}';">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="{{styleUri}}" rel="stylesheet">
+<title>Prompt Saiyan</title>
+</head>
+<body>
+<h2>Settings</h2>
+<div>
+    <label for="serverUrl">MCP Server URL:</label>
+    <input type="text" id="serverUrl" name="serverUrl">
+    <button id="saveSettings">Save</button>
+</div>
+            <hr>
+<h2>History</h2>
+            <button id="clearHistory">Clear History</button>
+<div id="historyContainer">
+    <p>No history yet.</p>
+</div>
+
+<script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+</body>
+</html>
