@@ -2,15 +2,15 @@
   "name": "promptsaiyan",
   "displayName": "Prompt Saiyan",
   "description": "Level up your AI interactions with Prompt Saiyan — the ultimate tool to supercharge your prompts and go Ultra Instinct with your productivity",
-  "publisher": "gokul", 
+  "publisher": "Gokul", 
   "version": "0.0.1",
-  "repository": { // ADD YOUR REPOSITORY URL
+  "repository": { 
     "type": "git",
-    "url": "https://github.com/your-username/promptsaiyan.git"
+    "url": "https://github.com/gokulkrishnan1293/prompt-saiyan.git"
   },
-  "homepage": "https://github.com/your-username/promptsaiyan#readme", // ADD YOUR HOMEPAGE
+  "homepage": "https://github.com/gokulkrishnan1293/prompt-saiyan#readme", 
   "bugs": {
-    "url": "https://github.com/your-username/promptsaiyan/issues" // ADD YOUR BUG TRACKER
+    "url": "https://github.com/gokulkrishnan1293/prompt-saiyan/issues" 
   },
   "engines": {
     "vscode": "^1.100.0"
