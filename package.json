@@ -3,15 +3,15 @@
   "displayName": "Prompt Saiyan",
   "description": "Level up your AI interactions with Prompt Saiyan — the ultimate tool to supercharge your prompts and go Ultra Instinct with your productivity",
   "publisher": "GokulKrishnan",
-  "version": "0.1.5",
-  "icon": "icon.png",
+  "version": "0.1.6",
+  "icon": "dist/media/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gokulkrishnan1293/prompt-saiyan.git"
+    "url": "https://github.com/gokulkrishnan1293/vscode-prompt-saiyan.git"
   },
-  "homepage": "https://github.com/gokulkrishnan1293/prompt-saiyan#readme",
+  "homepage": "https://github.com/gokulkrishnan1293/vscode-prompt-saiyan#readme",
   "bugs": {
-    "url": "https://github.com/gokulkrishnan1293/prompt-saiyan/issues"
+    "url": "https://github.com/gokulkrishnan1293/vscode-prompt-saiyan/issues"
   },
   "engines": {
     "vscode": "^1.100.0"
