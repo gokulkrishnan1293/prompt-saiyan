@@ -10,6 +10,7 @@ Prompt Saiyan is a VS Code extension designed to enhance your development workfl
 *   **Settings Management:** Configure settings such as the MCP server URL.
 *   **Workspace Context:** The extension can analyze your workspace structure to provide more relevant AI responses.
 *   **MCP Server Integration:** Optionally connect to an MCP server for enriched AI interactions.
+    *   Users can leverage the MCP server to provide "enhance prompt principles" (custom instructions or guidelines) to tailor the AI's prompt construction, leading to more relevant and friendly responses based on their specific needs.
 *   **Output Channel:** Provides an output channel named "PromptSaiyan" for logging and debugging.
 
 ## Core Components

@@ -143,11 +143,58 @@ private async _getHtmlForWebview(webview: vscode.Webview): Promise<string> {
     
     const buffer = await vscode.workspace.fs.readFile(htmlUri);
     let html = buffer.toString();
+
+    // Get the configured MCP server URL to add to CSP
+    const mcpServerUrl = vscode.workspace.getConfiguration('promptsaiyan').get('serverUrl', '');
+    let connectSrc = "connect-src 'self'"; // Default connect-src
+    if (mcpServerUrl) {
+        try {
+            const url = new URL(mcpServerUrl);
+            // Add the origin (protocol + hostname + port) to connect-src
+            connectSrc += ` ${url.protocol}//${url.host}`;
+        } catch (e) {
+            console.error("Invalid MCP Server URL for CSP:", mcpServerUrl, e);
+            // Potentially show a warning to the user or log to output channel
+        }
+    }
+
+
     html = html
-        .replace(/{{cspSource}}/g, csp)
+        .replace(/{{cspSource}}/g, csp) // cspSource is used for style-src, img-src etc.
+        .replace(
+            // Replace the existing Content-Security-Policy meta tag or add connect-src to it
+            /(<meta http-equiv="Content-Security-Policy" content=")([^"]*)(")/,
+            `$1$2; ${connectSrc}$3`
+        )
         .replace(/{{nonce}}/g, nonce)
         .replace(/{{styleUri}}/g, styleUri.toString())
         .replace(/{{scriptUri}}/g, scriptUri.toString());
+
+    // If the CSP meta tag wasn't found and replaced, we might need a more robust way
+    // or ensure the {{cspSource}} placeholder in index.html is within the content attribute of the CSP meta tag.
+    // For simplicity, the current replacement assumes {{cspSource}} is part of the CSP string.
+    // A more robust approach for CSP:
+    // The initial CSP in index.html should be:
+    // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src 'nonce-{{nonce}}'; {{connectSrc}}">
+    // And then replace {{connectSrc}} here.
+    // However, the current approach modifies the existing CSP string.
+
+    // Let's adjust the replacement in index.html's meta tag to be more specific for connect-src
+    // The meta tag in index.html is:
+    // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src 'nonce-{{nonce}}';">
+    // We need to inject connect-src into this.
+
+    // Revised replacement strategy for CSP:
+    const originalCspContent = `default-src 'none'; style-src ${csp}; script-src 'nonce-${nonce}';`;
+    const finalCspContent = `${originalCspContent} ${connectSrc};`;
+
+    html = buffer.toString() // Re-read buffer to avoid issues with multiple replacements on the same string
+        .replace(/default-src 'none'; style-src {{cspSource}}; script-src 'nonce-{{nonce}}';/g, finalCspContent)
+        .replace(/{{nonce}}/g, nonce) // Nonce for scriptUri might still be needed if not covered by CSP replacement
+        .replace(/{{styleUri}}/g, styleUri.toString())
+        .replace(/{{scriptUri}}/g, scriptUri.toString());
+
+
     return html;
 }
 
