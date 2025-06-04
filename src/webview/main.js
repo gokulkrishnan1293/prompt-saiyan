@@ -11,10 +11,50 @@
     const submitPromptButton = document.getElementById('submitPrompt');
     const promptOutput = document.getElementById('promptOutput');
     const copyPromptOutputButton = document.getElementById('copyPromptOutput');
+    const serverStatusSpan = document.getElementById('serverStatus');
 
+
+    // Function to check MCP server health
+    async function checkServerStatus(baseUrl) {
+        if (!baseUrl) {
+            serverStatusSpan.textContent = 'URL not set';
+            serverStatusSpan.style.color = 'orange';
+            return;
+        }
+        // Ensure the URL doesn't end with a slash before appending /health
+        // Extract only the protocol, host, and port (ignore any path/query/hash)
+        let healthUrl = "";
+        try {
+            const urlObj = new URL(baseUrl);
+            const baseOrigin = urlObj.origin; // e.g., "http://localhost:8000"
+            healthUrl = baseOrigin + '/health';
+        } catch (e) {
+            serverStatusSpan.textContent = 'Invalid URL';
+            serverStatusSpan.style.color = 'orange';
+            return;
+        }
+        serverStatusSpan.textContent = 'Checking...';
+        serverStatusSpan.style.color = 'inherit'; // Reset color
+
+        try {
+            const response = await fetch(healthUrl);
+            if (response.ok) {
+                const data = await response.json(); // Assuming server returns JSON e.g. {"status": "ok"}
+                serverStatusSpan.textContent = `Online (Status: ${data.status || 'OK'})`;
+                serverStatusSpan.style.color = 'green';
+            } else {
+                serverStatusSpan.textContent = `Offline (HTTP ${response.status})`;
+                serverStatusSpan.style.color = 'red';
+            }
+        } catch (error) {
+            console.error('Health check failed:', error);
+            serverStatusSpan.textContent = 'Error connecting';
+            serverStatusSpan.style.color = 'red';
+        }
+    }
 
     // Request initial settings and history when the webview loads
-    vscode.postMessage({ type: 'getSettings' });
+    vscode.postMessage({ type: 'getSettings' }); // This will trigger checkServerStatus via the 'settings' message handler
     vscode.postMessage({ type: 'getHistory' });
 
     // Tab switching logic
@@ -41,6 +81,7 @@
     saveSettingsButton.addEventListener('click', () => {
         const serverUrl = serverUrlInput.value;
         vscode.postMessage({ type: 'saveSettings', serverUrl: serverUrl });
+        checkServerStatus(serverUrl); // Check status immediately after trying to save
     });
 
     clearHistoryButton.addEventListener('click', () => {
@@ -79,6 +120,9 @@
             case 'settings':
                 if (message.serverUrl) {
                     serverUrlInput.value = message.serverUrl;
+                    checkServerStatus(message.serverUrl); // Check status when settings are loaded
+                } else {
+                    checkServerStatus(null); // Handle case where serverUrl might be initially empty
                 }
                 break;
             case 'history':

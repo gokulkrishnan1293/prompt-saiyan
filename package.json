@@ -3,7 +3,8 @@
   "displayName": "Prompt Saiyan",
   "description": "Level up your AI interactions with Prompt Saiyan — the ultimate tool to supercharge your prompts and go Ultra Instinct with your productivity",
   "publisher": "GokulKrishnan",
-  "version": "0.1.4",
+  "version": "0.1.5",
+  "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/gokulkrishnan1293/prompt-saiyan.git"
