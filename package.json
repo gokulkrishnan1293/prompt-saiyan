@@ -37,20 +37,13 @@
       "promptsaiyan-sidebar-view-container": [
         {
           "id": "promptsaiyan.sidebarView",
-          "name": "Settings & History",
+          "name": "Manage",
           "type": "webview",
           "contextualTitle": "Prompt Saiyan",
           "icon": "dist/media/icon.svg"
         }
       ]
     },
-    "commands": [
-      {
-        "command": "promptsaiyan.openSettings",
-        "title": "Prompt Saiyan: Open MCP Server Settings",
-        "category": "Prompt Saiyan"
-      }
-    ],
     "configuration": {
       "title": "Prompt Saiyan",
       "properties": {
