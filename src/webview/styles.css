@@ -163,3 +163,13 @@ pre {
 .tab-content.active {
     display: block; /* Shown when active */
 }
+
+.output-margin {
+    margin-top: 30px;
+}
+
+.output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
