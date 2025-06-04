@@ -7,9 +7,36 @@
     const historyContainer = document.getElementById('historyContainer');
     const clearHistoryButton = document.getElementById('clearHistory');
 
+    const promptInput = document.getElementById('promptInput');
+    const submitPromptButton = document.getElementById('submitPrompt');
+    const promptOutput = document.getElementById('promptOutput');
+    const copyPromptOutputButton = document.getElementById('copyPromptOutput');
+
+
     // Request initial settings and history when the webview loads
     vscode.postMessage({ type: 'getSettings' });
     vscode.postMessage({ type: 'getHistory' });
+
+    // Tab switching logic
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            // Deactivate all tabs and content
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Activate clicked tab and its content
+            button.classList.add('active');
+            const tabId = button.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+
+    // Set initial active tab (optional, if not already set by HTML class)
+    // document.querySelector('.tab-button[data-tab="enhanceTab"]').click();
+
 
     saveSettingsButton.addEventListener('click', () => {
         const serverUrl = serverUrlInput.value;
@@ -19,7 +46,33 @@
     clearHistoryButton.addEventListener('click', () => {
         vscode.postMessage({ type: 'clearHistory' });
     });
+    
+    submitPromptButton.addEventListener('click', () => {
+        const promptText = promptInput.value;
+        if (promptText) {
+            promptOutput.textContent = 'Enhancing...'; // Provide immediate feedback
+            vscode.postMessage({ type: 'submitPrompt', text: promptText });
+        }
+    });
 
+    copyPromptOutputButton.addEventListener('click', () => {
+        const textToCopy = promptOutput.textContent;
+        if (textToCopy && textToCopy !== 'Output will appear here...' && textToCopy !== 'Enhancing...') {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // Optional: Show a temporary "Copied!" message or change button text
+                const originalButtonText = copyPromptOutputButton.textContent;
+                copyPromptOutputButton.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyPromptOutputButton.textContent = originalButtonText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                // You could inform the user about the error if desired
+                vscode.postMessage({ type: 'error', text: 'Failed to copy text to clipboard.' });
+            });
+        }
+    });
+    
     window.addEventListener('message', event => {
         const message = event.data;
         switch (message.type) {
@@ -31,9 +84,17 @@
             case 'history':
                 renderHistory(message.history);
                 break;
+            case 'enhancedPrompt':
+                promptOutput.textContent = message.text;
+                // Optionally, clear the input field after successful enhancement
+                // promptInput.value = '';
+                break;
+            case 'promptError':
+                promptOutput.textContent = `Error: ${message.error}`;
+                break;
         }
     });
-
+    
     function renderHistory(history) {
         if (!history || history.length === 0) {
             historyContainer.innerHTML = '<p>No history yet.</p>';

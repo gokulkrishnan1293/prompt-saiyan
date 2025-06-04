@@ -82,6 +82,30 @@ class SidebarViewProvider implements vscode.WebviewViewProvider {
                     vscode.window.showInformationMessage('Prompt history cleared.');
                     break;
                 }
+                case 'submitPrompt': {
+                    if (!data.text) {
+                        webviewView.webview.postMessage({ type: 'promptError', error: 'Prompt text cannot be empty.' });
+                        return;
+                    }
+                    try {
+                        // For simplicity, we'll assume the current active editor's language for context,
+                        // or undefined if no editor is active.
+                        const editor = vscode.window.activeTextEditor;
+                        const languageId = editor?.document.languageId;
+
+                        const enhancedPrompt = await promptSaiyan(data.text, languageId);
+                        webviewView.webview.postMessage({ type: 'enhancedPrompt', text: enhancedPrompt });
+                        
+                        // Also add this interaction to history
+                        if (sidebarViewProvider) {
+                            sidebarViewProvider.addHistoryEntry(data.text, enhancedPrompt);
+                        }
+                    } catch (error: any) {
+                        vscode.window.showErrorMessage(`Error enhancing prompt: ${error.message}`);
+                        webviewView.webview.postMessage({ type: 'promptError', error: error.message || 'Unknown error' });
+                    }
+                    break;
+                }
             }
         });
 

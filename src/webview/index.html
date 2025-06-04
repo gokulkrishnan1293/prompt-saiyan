@@ -8,19 +8,45 @@
 <title>Prompt Saiyan</title>
 </head>
 <body>
-<h2>Settings</h2>
-<div>
-    <label for="serverUrl">MCP Server URL:</label>
-    <input type="text" id="serverUrl" name="serverUrl">
-    <button id="saveSettings">Save</button>
-</div>
-            <hr>
-<h2>History</h2>
-            <button id="clearHistory">Clear History</button>
-<div id="historyContainer">
-    <p>No history yet.</p>
-</div>
+    <div class="tab-bar">
+        <button class="tab-button active" data-tab="enhanceTab">Enhance</button>
+        <button class="tab-button" data-tab="settingsTab">Settings</button>
+        <button class="tab-button" data-tab="historyTab">History</button>
+    </div>
 
-<script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+    <div id="enhanceTab" class="tab-content active">
+        <h2>Enhance Prompt</h2>
+        <div>
+            <label for="promptInput">Enter your prompt:</label>
+            <textarea id="promptInput" rows="5"></textarea>
+            <button id="submitPrompt">Enhance</button>
+        </div>
+        <div id="promptOutputContainer" style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label>Enhanced Prompt:</label>
+                <button id="copyPromptOutput" title="Copy to clipboard">Copy</button>
+            </div>
+            <pre id="promptOutput">Output will appear here...</pre>
+        </div>
+    </div>
+
+    <div id="settingsTab" class="tab-content">
+        <h2>Settings</h2>
+        <div>
+            <label for="serverUrl">MCP Server URL:</label>
+            <input type="text" id="serverUrl" name="serverUrl">
+            <button id="saveSettings">Save</button>
+        </div>
+    </div>
+
+    <div id="historyTab" class="tab-content">
+        <h2>History</h2>
+        <button id="clearHistory">Clear History</button>
+        <div id="historyContainer">
+            <p>No history yet.</p>
+        </div>
+    </div>
+
+	<script nonce="{{nonce}}" src="{{scriptUri}}"></script>
 </body>
 </html>

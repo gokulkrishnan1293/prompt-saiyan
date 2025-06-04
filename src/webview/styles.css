@@ -28,7 +28,23 @@ input[type="text"] {
     background-color: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border-radius: 3px;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
+
+textarea {
+    width: calc(100% - 22px); /* Account for padding and border if any, adjust as needed */
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 3px;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    resize: vertical; /* Allow vertical resizing */
+}
+
 
 button {
     padding: 8px 15px;
@@ -101,4 +117,49 @@ pre {
     font-family: var(--vscode-editor-font-family); /* Use editor font for code blocks */
     font-size: var(--vscode-editor-font-size);
     color: var(--vscode-editor-foreground); /* Ensure text in pre is visible */
+    border: 1px solid var(--vscode-editorWidget-border); /* Optional: add a border like other elements */
+}
+
+#copyPromptOutput {
+    padding: 4px 8px; /* Smaller padding for a less prominent button */
+    font-size: 0.9em; /* Slightly smaller font */
+    margin-left: 10px; /* Space it from the label */
+    /* margin-top is handled by flex alignment if needed, or remove if label is block */
+}
+
+/* Tab Styles */
+.tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--vscode-editorWidget-border);
+    margin-bottom: 15px;
+}
+
+.tab-button {
+    padding: 10px 15px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    color: var(--vscode-editor-foreground);
+    margin-right: 5px; /* Reset margin from generic button style */
+    margin-top: 0; /* Reset margin from generic button style */
+    border-bottom: 2px solid transparent; /* For active state */
+    outline: none; /* Remove focus outline for tab buttons */
+}
+
+.tab-button:hover {
+    background-color: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)); /* Use a subtle hover */
+}
+
+.tab-button.active {
+    color: var(--vscode-tab-activeForeground, var(--vscode-editor-foreground));
+    border-bottom-color: var(--vscode-tab-activeBorder, var(--vscode-focusBorder));
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none; /* Hidden by default */
+}
+
+.tab-content.active {
+    display: block; /* Shown when active */
 }

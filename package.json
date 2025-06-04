@@ -29,7 +29,7 @@
         {
           "id": "promptsaiyan-sidebar-view-container",
           "title": "Prompt Saiyan",
-          "icon": "dist/media/saiyan-icon.png"
+          "icon": "dist/media/icon.svg"
         }
       ]
     },
@@ -40,7 +40,7 @@
           "name": "Settings & History",
           "type": "webview",
           "contextualTitle": "Prompt Saiyan",
-          "icon": "dist/media/saiyan-icon.png"
+          "icon": "dist/media/icon.svg"
         }
       ]
     },
