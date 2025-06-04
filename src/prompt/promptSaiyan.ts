@@ -174,27 +174,28 @@ async function promptSaiyan(promptText: string, languageId?: string, clarifiedPr
 
             if (typeof projectTypeToUse === 'string' && ambiguousTypePatterns.some(pattern => projectTypeToUse.startsWith(pattern))) {
                 promptSaiyanOutputChannel.appendLine(`[Workspace Scan] Heuristic project type is ambiguous: "${projectTypeToUse}". Clarification required.`);
-                return JSON.stringify({
+                /*return JSON.stringify({
                     status: "clarification_needed",
                     heuristic: projectTypeToUse,
                     file_counts: fileCounts,
                     original_prompt: promptText,
                     language_id: languageId
-                });
+                });*/
             }
             promptSaiyanOutputChannel.appendLine(`[Workspace Scan] Using heuristic project type: "${projectTypeToUse}".`);
         }
     } catch (e: any) {
         promptSaiyanOutputChannel.appendLine(`[Workspace Scan] Error processing workspace scan output: ${e.message}. Raw: ${rawWorkspaceScanOutput}`);
         // Fallback if parsing scan output fails, signal for clarification
-        return JSON.stringify({
+        projectTypeToUse = "";
+        /*return JSON.stringify({
             status: "clarification_needed",
             heuristic: "error_processing_scan_output",
             file_counts: {},
             original_prompt: promptText,
             language_id: languageId,
             error_details: e.message
-        });
+        });*/
     }
     
     const workspaceInfoForMcp = {
