@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import axios from 'axios';
-import { promptSaiyanOutputChannel,getMcpServerUrl } from '../helpers/helpers'; // Adjust the import path as necessary
+import { promptSaiyanOutputChannel,getMcpServerUrl } from './helpers'; 
 
 interface WorkspaceInfo {
     file_counts: { [key: string]: number };
@@ -18,8 +18,8 @@ async function callMcpServer(initialPrompt: string, workspaceInfo: WorkspaceInfo
             tool_name: "enrich_prompt",
             arguments: {
             raw_prompt: initialPrompt,
-            workspace_info: workspaceInfo, // Send the structured workspace info
-            language: languageId // Pass language if available
+            workspace_info: workspaceInfo, 
+            language: languageId 
     }});
 
         if (response.data && response.data.data && response.data.data.enriched_prompt) {

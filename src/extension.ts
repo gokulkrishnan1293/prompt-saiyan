@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { promptSaiyan } from './prompt/promptSaiyan';
-//import { promptSaiyanOutputChannel } from './helpers';
+import { promptSaiyan } from './prompt';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -14,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 
    
 
-    // Register the Sidebar View Provider
+    
     const sidebarProvider = new SidebarViewProvider(context.extensionUri, context);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(SidebarViewProvider.viewType, sidebarProvider)
@@ -26,7 +25,7 @@ export function registerAgentTools(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.lm.registerTool('promptsaiyan', new promptSaiyanTool()));
 }
 
-// Store a reference to the sidebar provider to allow other parts of the extension to interact with it
+
 let sidebarViewProvider: SidebarViewProvider | undefined;
 
 class SidebarViewProvider implements vscode.WebviewViewProvider {
@@ -40,7 +39,7 @@ class SidebarViewProvider implements vscode.WebviewViewProvider {
         context: vscode.ExtensionContext
     ) {
         this._context = context;
-        sidebarViewProvider = this; // Store the instance
+        sidebarViewProvider = this; 
     }
 
     public resolveWebviewView(
@@ -131,38 +130,37 @@ class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 
 private async _getHtmlForWebview(webview: vscode.Webview): Promise<string> {
-    // Path to the index.html file within the dist/media directory
+    
     const htmlUri = vscode.Uri.joinPath(this._extensionUri, 'dist', 'media', 'index.html');
 
-    // URIs for webview resources, also pointing to dist/media
+    
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'media', 'main.js'));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'media', 'styles.css'));
     
-    const nonce = getNonce(); // Helper function to generate a nonce
+    const nonce = getNonce(); 
     const csp = webview.cspSource;
     
     const buffer = await vscode.workspace.fs.readFile(htmlUri);
     let html = buffer.toString();
 
-    // Get the configured MCP server URL to add to CSP
+    
     const mcpServerUrl = vscode.workspace.getConfiguration('promptsaiyan').get('serverUrl', '');
-    let connectSrc = "connect-src 'self'"; // Default connect-src
+    let connectSrc = "connect-src 'self'"; 
     if (mcpServerUrl) {
         try {
             const url = new URL(mcpServerUrl);
-            // Add the origin (protocol + hostname + port) to connect-src
             connectSrc += ` ${url.protocol}//${url.host}`;
         } catch (e) {
             console.error("Invalid MCP Server URL for CSP:", mcpServerUrl, e);
-            // Potentially show a warning to the user or log to output channel
+            
         }
     }
 
 
     html = html
-        .replace(/{{cspSource}}/g, csp) // cspSource is used for style-src, img-src etc.
+        .replace(/{{cspSource}}/g, csp) 
         .replace(
-            // Replace the existing Content-Security-Policy meta tag or add connect-src to it
+            
             /(<meta http-equiv="Content-Security-Policy" content=")([^"]*)(")/,
             `$1$2; ${connectSrc}$3`
         )
@@ -170,27 +168,13 @@ private async _getHtmlForWebview(webview: vscode.Webview): Promise<string> {
         .replace(/{{styleUri}}/g, styleUri.toString())
         .replace(/{{scriptUri}}/g, scriptUri.toString());
 
-    // If the CSP meta tag wasn't found and replaced, we might need a more robust way
-    // or ensure the {{cspSource}} placeholder in index.html is within the content attribute of the CSP meta tag.
-    // For simplicity, the current replacement assumes {{cspSource}} is part of the CSP string.
-    // A more robust approach for CSP:
-    // The initial CSP in index.html should be:
-    // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src 'nonce-{{nonce}}'; {{connectSrc}}">
-    // And then replace {{connectSrc}} here.
-    // However, the current approach modifies the existing CSP string.
-
-    // Let's adjust the replacement in index.html's meta tag to be more specific for connect-src
-    // The meta tag in index.html is:
-    // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src 'nonce-{{nonce}}';">
-    // We need to inject connect-src into this.
-
-    // Revised replacement strategy for CSP:
+   
     const originalCspContent = `default-src 'none'; style-src ${csp}; script-src 'nonce-${nonce}';`;
     const finalCspContent = `${originalCspContent} ${connectSrc};`;
 
-    html = buffer.toString() // Re-read buffer to avoid issues with multiple replacements on the same string
+    html = buffer.toString() 
         .replace(/default-src 'none'; style-src {{cspSource}}; script-src 'nonce-{{nonce}}';/g, finalCspContent)
-        .replace(/{{nonce}}/g, nonce) // Nonce for scriptUri might still be needed if not covered by CSP replacement
+        .replace(/{{nonce}}/g, nonce) 
         .replace(/{{styleUri}}/g, styleUri.toString())
         .replace(/{{scriptUri}}/g, scriptUri.toString());
 
@@ -201,7 +185,7 @@ private async _getHtmlForWebview(webview: vscode.Webview): Promise<string> {
 
 };
 
-// Function to get nonce for CSP
+
 function getNonce() {
     let text = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -211,9 +195,7 @@ function getNonce() {
     return text;
 }
 
-// Modify promptSaiyan function to record history
-// We need to find where promptSaiyan is called and pass the response back.
-// For now, let's assume promptSaiyanTool's invoke method is the primary place.
+
 
 interface IPromptBoostParameters {
     promptText: string;
