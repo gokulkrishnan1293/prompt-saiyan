@@ -15,38 +15,45 @@
     </div>
 
     <div id="enhanceTab" class="tab-content active">
-        <h2>Enhance Prompt</h2>
-        <div>
-            <label for="promptInput">Enter your prompt:</label>
-            <textarea id="promptInput" rows="5"></textarea>
-            <button id="submitPrompt">Enhance</button>
-        </div>
-        <div id="promptOutputContainer" class="output-margin">
-            <div class="output-header">
-                <label>Enhanced Prompt:</label>
-                <button id="copyPromptOutput" title="Copy to clipboard">Copy</button>
-            </div>
+        
+        <div id="promptOutputContainer" class="output-margin hidden">
             <pre id="promptOutput">Output will appear here...</pre>
+            <button id="copyPromptOutput" title="Copy to clipboard">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="prompt-input-area">
+            <textarea id="promptInput" placeholder="Enter your prompt..." rows="1"></textarea>
+            <button id="submitPrompt" title="Send">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
         </div>
     </div>
 
     <div id="settingsTab" class="tab-content">
-        <h2>Settings</h2>
+        
         <div>
             <label for="serverUrl">MCP Server URL:</label>
             <input type="text" id="serverUrl" name="serverUrl">
             <button id="saveSettings">Save</button>
-            <div id="serverStatusContainer" style="margin-top: 10px;">
+            <div id="serverStatusContainer">
                 Server Status: <span id="serverStatus">Checking...</span>
             </div>
         </div>
     </div>
 
     <div id="historyTab" class="tab-content">
-        <h2>History</h2>
-        <button id="clearHistory">Clear History</button>
+        
+        <div class="history-controls">
+            <input type="text" id="historySearchInput" placeholder="Search history...">
+            <button id="clearHistory">Clear History</button>
+        </div>
         <div id="historyContainer">
-            <p>No history yet.</p>
+            <!-- History items will be populated here by JavaScript -->
         </div>
     </div>
 

@@ -6,6 +6,9 @@
     const saveSettingsButton = document.getElementById('saveSettings');
     const historyContainer = document.getElementById('historyContainer');
     const clearHistoryButton = document.getElementById('clearHistory');
+    const historySearchInput = document.getElementById('historySearchInput');
+
+    let fullHistory = []; // To store the complete history for filtering
 
     const promptInput = document.getElementById('promptInput');
     const submitPromptButton = document.getElementById('submitPrompt');
@@ -88,23 +91,61 @@
         vscode.postMessage({ type: 'clearHistory' });
     });
     
-    submitPromptButton.addEventListener('click', () => {
-        const promptText = promptInput.value;
+    function submitPrompt() {
+        const promptText = promptInput.value.trim(); // Trim whitespace
         if (promptText) {
-            promptOutput.textContent = 'Enhancing...'; // Provide immediate feedback
+            document.getElementById('promptOutputContainer').classList.remove('hidden'); // Show output container
+            promptOutput.textContent = 'Enhancing...';
             vscode.postMessage({ type: 'submitPrompt', text: promptText });
+            promptInput.value = '';
+            adjustTextareaHeight(); // Reset height after clearing
+        }
+    }
+
+    submitPromptButton.addEventListener('click', submitPrompt);
+
+    promptInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault(); // Prevent new line on Enter
+            submitPrompt();
         }
     });
+
+    promptInput.addEventListener('input', adjustTextareaHeight);
+
+    function adjustTextareaHeight() {
+        promptInput.style.height = 'auto'; // Reset height to shrink if text is deleted
+        let newHeight = promptInput.scrollHeight;
+        // Consider padding and border if box-sizing is content-box
+        // For border-box, scrollHeight should be sufficient
+        
+        const computedStyle = getComputedStyle(promptInput);
+        const maxHeight = parseInt(computedStyle.maxHeight, 10) || 100; // Fallback to 100px if not set
+
+        if (newHeight > maxHeight) {
+            newHeight = maxHeight;
+            promptInput.style.overflowY = 'auto'; 
+        } else {
+            promptInput.style.overflowY = 'hidden';
+        }
+        promptInput.style.height = newHeight + 'px';
+    }
+    
+    // Initial adjustment 
+    adjustTextareaHeight();
 
     copyPromptOutputButton.addEventListener('click', () => {
         const textToCopy = promptOutput.textContent;
         if (textToCopy && textToCopy !== 'Output will appear here...' && textToCopy !== 'Enhancing...') {
             navigator.clipboard.writeText(textToCopy).then(() => {
-                // Optional: Show a temporary "Copied!" message or change button text
-                const originalButtonText = copyPromptOutputButton.textContent;
-                copyPromptOutputButton.textContent = 'Copied!';
+                const originalButtonContent = copyPromptOutputButton.innerHTML;
+                copyPromptOutputButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                `;
                 setTimeout(() => {
-                    copyPromptOutputButton.textContent = originalButtonText;
+                    copyPromptOutputButton.innerHTML = originalButtonContent;
                 }, 1500);
             }).catch(err => {
                 console.error('Failed to copy text: ', err);
@@ -114,6 +155,39 @@
         }
     });
     
+    function createCopyButton(textToCopy, container) {
+        const button = document.createElement('button');
+        button.className = 'history-copy-button';
+        button.title = 'Copy to clipboard';
+        const originalIconSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>`;
+        const successIconSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>`;
+        button.innerHTML = originalIconSvg;
+
+        button.addEventListener('click', () => {
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    button.innerHTML = successIconSvg;
+                    setTimeout(() => {
+                        button.innerHTML = originalIconSvg;
+                    }, 1500);
+                }).catch(err => {
+                    console.error('Failed to copy text from history: ', err);
+                    vscode.postMessage({ type: 'error', text: 'Failed to copy text to clipboard.' });
+                });
+            }
+        });
+        container.appendChild(button);
+        // Position the button absolutely within its container (promptDiv or responseDiv)
+        // This requires the container to have position: relative
+        container.style.position = 'relative';
+    }
+
     window.addEventListener('message', event => {
         const message = event.data;
         switch (message.type) {
@@ -126,33 +200,49 @@
                 }
                 break;
             case 'history':
-                renderHistory(message.history);
+                fullHistory = message.history || [];
+                renderHistory(fullHistory); // Render all history initially
                 break;
             case 'enhancedPrompt':
+                document.getElementById('promptOutputContainer').classList.remove('hidden'); // Ensure it's visible
                 promptOutput.textContent = message.text;
-                // Optionally, clear the input field after successful enhancement
-                // promptInput.value = '';
                 break;
             case 'promptError':
+                document.getElementById('promptOutputContainer').classList.remove('hidden'); // Ensure it's visible
                 promptOutput.textContent = `Error: ${message.error}`;
                 break;
         }
     });
     
-    function renderHistory(history) {
-        if (!history || history.length === 0) {
-            historyContainer.innerHTML = '<p>No history yet.</p>';
+    function renderHistory(historyToRender) {
+        if (!historyToRender || historyToRender.length === 0) {
+            const searchTerm = historySearchInput.value.trim();
+            if (searchTerm) {
+                historyContainer.innerHTML = '<p>No history matches your search.</p>';
+            } else {
+                historyContainer.innerHTML = '<p>No history yet.</p>';
+            }
             return;
         }
 
         historyContainer.innerHTML = ''; // Clear previous history
 
-        const ul = document.createElement('ul');
-        ul.className = 'history-list';
+        // This check is now at the beginning of the function
+        // if (historyToRender.length === 0) {
+        //     historyContainer.innerHTML = '<p>No history yet.</p>';
+        //     return;
+        // }
 
-        history.forEach(entry => {
-            const li = document.createElement('li');
-            li.className = 'history-entry';
+        const historyWrapper = document.createElement('div');
+        historyWrapper.className = 'history-items-wrapper';
+
+        historyToRender.forEach(entry => {
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            // Add data attributes for searching
+            card.dataset.prompt = entry.prompt.toLowerCase();
+            card.dataset.response = entry.response.toLowerCase();
+
 
             const promptDiv = document.createElement('div');
             promptDiv.className = 'prompt-section';
@@ -161,21 +251,47 @@
             promptDiv.appendChild(promptHeader);
             const promptPre = document.createElement('pre');
             promptPre.textContent = entry.prompt;
-            promptDiv.appendChild(promptPre);
+            
+            const promptPreWrapper = document.createElement('div');
+            promptPreWrapper.className = 'pre-wrapper';
+            promptPreWrapper.appendChild(promptPre);
+            createCopyButton(entry.prompt, promptPreWrapper); // Pass wrapper to copy button
+            promptDiv.appendChild(promptPreWrapper);
+
 
             const responseDiv = document.createElement('div');
-responseDiv.className = 'response-section';
+            responseDiv.className = 'response-section';
             const responseHeader = document.createElement('strong');
             responseHeader.textContent = 'Response:';
             responseDiv.appendChild(responseHeader);
             const responsePre = document.createElement('pre');
             responsePre.textContent = entry.response;
-            responseDiv.appendChild(responsePre);
 
-            li.appendChild(promptDiv);
-            li.appendChild(responseDiv);
-            ul.appendChild(li);
+            const responsePreWrapper = document.createElement('div');
+            responsePreWrapper.className = 'pre-wrapper';
+            responsePreWrapper.appendChild(responsePre);
+            createCopyButton(entry.response, responsePreWrapper); // Pass wrapper to copy button
+            responseDiv.appendChild(responsePreWrapper);
+
+            card.appendChild(promptDiv);
+            card.appendChild(responseDiv);
+            historyWrapper.appendChild(card);
         });
-        historyContainer.appendChild(ul);
+        historyContainer.appendChild(historyWrapper);
     }
+
+    historySearchInput.addEventListener('input', () => {
+        const searchTerm = historySearchInput.value.trim().toLowerCase();
+        if (!searchTerm) {
+            renderHistory(fullHistory); // If search is empty, show all history
+            return;
+        }
+
+        const filteredHistory = fullHistory.filter(entry => {
+            return entry.prompt.toLowerCase().includes(searchTerm) ||
+                   entry.response.toLowerCase().includes(searchTerm);
+        });
+        renderHistory(filteredHistory);
+    });
+
 }());

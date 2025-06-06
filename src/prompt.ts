@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import axios from 'axios'; // For making HTTP requests to your MCP server
-import { promptSaiyanOutputChannel } from '../helpers/helpers'; // Assuming this is correctly exported
-import { callMcpServer } from '../mcpserver/mcpserver'; // Import the MCP server call function
+import { baseprompt, promptSaiyanOutputChannel } from './helpers'; 
+import { callMcpServer } from './mcpserver'; 
 
 let currentModel: vscode.LanguageModelChat[] | undefined;
 
@@ -10,7 +9,7 @@ async function getWorkspaceStructure(): Promise<string> {
     promptSaiyanOutputChannel.appendLine('[Workspace Scan] Starting dynamic workspace scan for file types and counts...');
     try {
         const includePattern = '{package.json,requirements.txt,requirement.txt,**/*.sql,**/*.py,**/*.ts,**/*.js,**/*.tsx,**/*.jsx}';
-        // Default exclude patterns
+        
         let excludePatterns: string[] = ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/.vscode-test/**'];
 
         const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -24,8 +23,8 @@ async function getWorkspaceStructure(): Promise<string> {
                     .filter(line => line && !line.startsWith('#'));
                 
                 const gitignoreGlobs = gitignoreLines.map(line => {
-                    // Basic .gitignore pattern to glob conversion
-                    if (line.startsWith('!')) { // Negation not directly supported by findFiles exclude, skip for simplicity
+                    
+                    if (line.startsWith('!')) { 
                         return '';
                     }
                     if (line.endsWith('/')) {
@@ -34,14 +33,13 @@ async function getWorkspaceStructure(): Promise<string> {
                     if (line.startsWith('*.')) {
                          return `**/${line}`;
                     }
-                    // If no slash, it can be a file or dir anywhere
+                    
                     if (!line.includes('/')) {
                          return `**/${line}`;
                     }
-                    // If starts with /, treat from root (already handled by findFiles if not prepended with **)
-                    // Otherwise, assume it can be anywhere if not specific
+                    
                     return line.startsWith('/') ? line.substring(1) : `**/${line}`;
-                }).filter(glob => glob !== ''); // Remove empty strings from skipped negations
+                }).filter(glob => glob !== ''); 
 
                 excludePatterns.push(...gitignoreGlobs);
                 promptSaiyanOutputChannel.appendLine(`[Workspace Scan] Loaded ${gitignoreGlobs.length} patterns from .gitignore. Effective excludes: ${excludePatterns.length}`);
@@ -64,7 +62,7 @@ async function getWorkspaceStructure(): Promise<string> {
         }
 
         const fileCounts: { [key: string]: number } = {};
-        const path = await import('path'); // Dynamically import path
+        const path = await import('path');
 
         for (const file of files) {
             const fullPath = file.fsPath;
@@ -78,7 +76,7 @@ async function getWorkspaceStructure(): Promise<string> {
             } else if (baseName === 'requirement.txt') {
                 key = 'requirement.txt';
             } else {
-                key = path.extname(fullPath).toLowerCase(); // Ensure consistent extension casing e.g. .SQL -> .sql
+                key = path.extname(fullPath).toLowerCase(); 
             }
 
             if (key) {
@@ -89,27 +87,27 @@ async function getWorkspaceStructure(): Promise<string> {
         // Heuristic project type classification
         let project_type_heuristic = "undetermined";
         const feScore = (fileCounts['.js'] || 0) + (fileCounts['.ts'] || 0) + (fileCounts['.tsx'] || 0) + (fileCounts['.jsx'] || 0);
-        const beScorePy = (fileCounts['.py'] || 0); // Assuming .py is main backend for now
-        // Add other backend languages here if needed, e.g. .java, .go, .rb
-        const beScore = beScorePy; // Sum up all backend language scores
+        const beScorePy = (fileCounts['.py'] || 0); 
+        
+        const beScore = beScorePy; 
         const dbScore = (fileCounts['.sql'] || 0);
 
         const totalRelevantScore = feScore + beScore + dbScore;
 
         if (totalRelevantScore === 0) {
-            if (Object.keys(fileCounts).length > 0) { // Other files like package.json might exist
+            if (Object.keys(fileCounts).length > 0) { 
                 project_type_heuristic = "no_primary_code_files_detected";
             } else {
                 project_type_heuristic = "no_relevant_files_found";
             }
-        } else if (totalRelevantScore < 3) { // Threshold for meaningful classification
+        } else if (totalRelevantScore < 3) { 
             project_type_heuristic = "insufficient_data_low_file_count";
         } else {
             const feRatio = feScore / totalRelevantScore;
             const beRatio = beScore / totalRelevantScore;
             const dbRatio = dbScore / totalRelevantScore;
 
-            // Check for dominant types (e.g., > 70% and at least 2 files of that type)
+            
             const minFilesForDominance = 2;
             if (feRatio >= 0.7 && feScore >= minFilesForDominance) {
                 project_type_heuristic = "frontend";
@@ -118,7 +116,7 @@ async function getWorkspaceStructure(): Promise<string> {
             } else if (dbRatio >= 0.7 && dbScore >= minFilesForDominance) {
                 project_type_heuristic = "database";
             } else {
-                // No single dominant type, check for mixed types
+                
                 const typesPresent = [];
                 if (feScore > 0) {typesPresent.push("frontend");};
                 if (beScore > 0) {typesPresent.push("backend-api");};
@@ -127,10 +125,10 @@ async function getWorkspaceStructure(): Promise<string> {
                 if (typesPresent.length > 1) {
                     project_type_heuristic = "mixed (" + typesPresent.join(", ") + ")";
                 } else if (typesPresent.length === 1) {
-                    // Only one type present, but not dominant enough by the 70% rule (e.g. 50% FE, 0% BE, 0% DB)
-                    project_type_heuristic = typesPresent[0]; // Classify as that single present type
+                    
+                    project_type_heuristic = typesPresent[0]; 
                 } else {
-                    // This case should ideally not be reached if totalRelevantScore > 0
+                    
                     project_type_heuristic = "undetermined_ambiguous_distribution";
                 }
             }
@@ -170,38 +168,25 @@ async function promptSaiyan(promptText: string, languageId?: string, clarifiedPr
             projectTypeToUse = heuristicType;
             const ambiguousTypePatterns = [
                 "mixed", "undetermined", "insufficient_data", "no_primary_code", "error_parsing_scan"
-            ]; // Simplified check for startsWith
+            ]; 
 
             if (typeof projectTypeToUse === 'string' && ambiguousTypePatterns.some(pattern => projectTypeToUse.startsWith(pattern))) {
                 promptSaiyanOutputChannel.appendLine(`[Workspace Scan] Heuristic project type is ambiguous: "${projectTypeToUse}". Clarification required.`);
-                /*return JSON.stringify({
-                    status: "clarification_needed",
-                    heuristic: projectTypeToUse,
-                    file_counts: fileCounts,
-                    original_prompt: promptText,
-                    language_id: languageId
-                });*/
+                
             }
             promptSaiyanOutputChannel.appendLine(`[Workspace Scan] Using heuristic project type: "${projectTypeToUse}".`);
         }
     } catch (e: any) {
         promptSaiyanOutputChannel.appendLine(`[Workspace Scan] Error processing workspace scan output: ${e.message}. Raw: ${rawWorkspaceScanOutput}`);
-        // Fallback if parsing scan output fails, signal for clarification
+       
         projectTypeToUse = "";
-        /*return JSON.stringify({
-            status: "clarification_needed",
-            heuristic: "error_processing_scan_output",
-            file_counts: {},
-            original_prompt: promptText,
-            language_id: languageId,
-            error_details: e.message
-        });*/
+       
     }
     
     const workspaceInfoForMcp = {
         file_counts: fileCounts,
         project_type: projectTypeToUse,
-        original_heuristic: heuristicType // Always log the original heuristic
+        original_heuristic: heuristicType 
     };
     
     // Stage 1: MCP Server Enrichment
@@ -257,92 +242,8 @@ async function promptSaiyan(promptText: string, languageId?: string, clarifiedPr
     // It will now operate on the `promptForLlm` which came from the MCP server.
     const messages = [
         vscode.LanguageModelChatMessage.User(`
-            You are a professional prompt engineer, an expert agent specializing in the meticulous analysis and transformation of user-submitted prompts into highly effective, specific, and actionable instructions optimized for Large Language Models (LLMs).
-            Your primary task is to either:
-            1. Perform a concise final review and formatting pass on prompts pre-enhanced by an MCP Server.
-            2. Execute a comprehensive enhancement on raw user prompts if no MCP pre-enhancement is detected.
-            Your goal is always to maximize the clarity, relevance, and utility of the LLM's generated output based on the prompt you produce.
-
-            **Input Source Handling:**
-            - **If the input is wrapped in <mcp_enhanced_input> tags:** This indicates the prompt has been pre-processed by an MCP Server. Your role is to perform a final review and ensure it meets all "Formatting Requirements for Your Output" (see below). Assume the core intent, structure, and substantive content from the MCP Server are sound. Focus on minor refinements for clarity, conciseness, and strict adherence to the Markdown formatting rules. You will report your processing mode as "MCP-Enhanced Review".
-            - **If the input is wrapped in <original_prompt> tags (and no <mcp_enhanced_input> is present):** This is a raw user prompt. You must apply the full "Fallback / Standard Enhancement Guidelines" (see below). You will report your processing mode as "Raw Prompt Full Enhancement".
-
-            **Formatting Requirements for Your Output (for the "enhanced_prompt" or "guidance_message" content):**
-            - The content of the "enhanced_prompt" or "guidance_message" field in your JSON response *must* be valid Markdown.
-            - Employ headings (e.g., ## Objective, ### Key Instructions) to delineate major sections.
-            - Utilize bulleted (-, *, or 1., 2.) lists for itemizing requirements, steps, constraints, or examples.
-            - Ensure clear paragraph separation for distinct ideas or contextual blocks.
-            - Use **bold** or *italics* for emphasis judiciously.
-            - Ensure the content is easy to read and visually organized.
-
-            **Concise Review Instructions for MCP Server Pre-Enhanced Input (when <mcp_enhanced_input> is detected):**
-            - **Primary Focus:** Review the MCP-provided prompt for overall clarity, conciseness, and to ensure it strictly adheres to all points listed under "Formatting Requirements for Your Output."
-            - **Trust MCP Core:** Assume the core intent, essential context, and primary instructions provided by the MCP server are largely correct and complete.
-            - **Minor Refinements Only:** Make only necessary minor adjustments. This may include:
-                - Improving flow or grammar.
-                - Ensuring consistent use of terminology.
-                - Adding or adjusting Markdown headings/lists to meet formatting standards if the MCP output was slightly off.
-                - Ensuring no redundant information remains after MCP processing.
-            - **Self-Containment Check:** Briefly verify the prompt remains self-contained.
-            - **Professional Tone Check:** Ensure a professional tone is maintained.
-            - **No Major Restructuring:** Do *not* fundamentally restructure or significantly rewrite content from the MCP server unless it glaringly violates a core principle or introduces severe ambiguity.
-
-            **Fallback / Standard Enhancement Guidelines (when only <original_prompt> is detected):**
-            - **Deconstruct Intent:** Identify the core objective of the <original_prompt> and rephrase it with utmost precision.
-            - **Enrich Context:** If necessary, infer and incorporate minimal, essential background. Make implicit assumptions explicit.
-            - **Clarify Instructions:** Convert vague requests into explicit, step-by-step instructions. Define key terms.
-            - **Specify Constraints:** Articulate implied or necessary constraints.
-            - **Eliminate Redundancy:** Remove superfluous information.
-            - **Ensure Self-Containment:** Ensure the prompt is self-contained.
-            - **Maintain Professional Tone:** Maintain a professional, formal, and direct tone.
-            - **Add Illustrative Examples:** If beneficial, provide 1-2 concise, clearly labeled examples.
-            - **Integrate References:** If applicable, suggest placeholder references.
-
-            **For invalid or unclear prompts (applies to both input types if issues persist):**
-            - **Polite Rejection/Guidance:** Do *not* attempt to enhance if fundamental flaws remain. Provide a concise, professional, and helpful message structured in the JSON output as described below. Report your processing mode as "Clarification Required".
-            - **Guidance Template (for the "guidance_message" field):**
-                [START MARKDOWN TEMPLATE for Guidance Message]
-                ## Prompt Clarification Required
-
-                The provided prompt (even if MCP processed) requires further clarification to be effectively finalized. Please consider the following:
-
-                *   Specific Objective: Is the primary goal crystal clear?
-                *   Necessary Context: Is all essential background information present and unambiguous?
-                *   Desired Output: Are the expectations for the LLM's response well-defined?
-
-                Please review and resubmit if necessary, or adjust MCP server logic.
-                [END MARKDOWN TEMPLATE for Guidance Message]
-            - **Maintain a helpful, constructive tone.**
-
-            **Expected Output Structure:**
-            Your entire response MUST be a single JSON object. Do NOT include any text or formatting outside of this JSON object.
-
-            For successful enhancement:
-            [START JSON STRUCTURE for Successful Enhancement]
-            {
-              "processing_mode": "MCP-Enhanced Review" OR "Raw Prompt Full Enhancement",
-              "summary": "A brief one-sentence summary of the action taken based on the processing_mode (e.g., 'Reviewed and formatted MCP-enhanced input.' or 'Performed full enhancement on raw prompt.').",
-              "enhanced_prompt": "The fully enhanced prompt text, formatted in Markdown as specified under 'Formatting Requirements for Your Output'."
-            }
-            [END JSON STRUCTURE for Successful Enhancement]
-
-            For invalid or unclear prompts requiring clarification:
-            [START JSON STRUCTURE for Clarification]
-            {
-              "processing_mode": "Clarification Required",
-              "summary": "A brief one-sentence summary (e.g., 'Input prompt requires clarification; guidance provided.').",
-              "guidance_message": "The clarification guidance message (using the template above), formatted in Markdown."
-            }
-            [END JSON STRUCTURE for Clarification]
-
-            **IMPORTANT (Output Constraints):**
-            - Your entire response MUST be a single, valid JSON object adhering to the "Expected Output Structure" described above.
-            - The value of the "enhanced_prompt" or "guidance_message" field within the JSON object MUST be a string containing valid Markdown, following all "Formatting Requirements for Your Output."
-            - Do NOT include any text, explanations, or metadata outside of this JSON object.
-            - Do NOT use XML tags (like <original_prompt> or <mcp_enhanced_input>) in the values within the JSON output. These tags are for your input processing only.
-
-            **User Input to Process (One of the following will be provided):**
-
+            ${baseprompt}
+            
             Format 1: Raw User Prompt
             <original_prompt>
             ${promptForLlm}
@@ -361,8 +262,8 @@ async function promptSaiyan(promptText: string, languageId?: string, clarifiedPr
     try {
         chatResponse = await model.sendRequest(
             messages,
-            {}, // You can add model-specific options here if needed
-            new vscode.CancellationTokenSource().token // Consider passing the token from the command/tool
+            {},
+            new vscode.CancellationTokenSource().token 
         );
     } catch (err: any) {
         promptSaiyanOutputChannel.appendLine(`[LLM Stage] Error during LLM request: ${String(err)}`);

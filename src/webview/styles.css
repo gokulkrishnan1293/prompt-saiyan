@@ -1,9 +1,19 @@
 /* media/styles.css */
-body {
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent scrollbars on html/body */
     font-family: var(--vscode-font-family);
     color: var(--vscode-editor-foreground);
     background-color: var(--vscode-sideBar-background);
-    padding: 10px;
+}
+
+body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 h2 {
@@ -69,14 +79,19 @@ hr {
 }
 
 #historyContainer {
-    margin-top: 10px;
-    max-height: 400px; /* Or adjust as needed */
-    overflow-y: auto;
+    flex-grow: 1; /* Takes all available vertical space in the flex column */
+    overflow-y: auto; /* Scrollable content */
     border: 1px solid var(--vscode-editorWidget-border);
     padding: 10px;
     background-color: var(--vscode-editor-background);
+    width: 100%; /* Full width of parent (.tab-content which has padding) */
+    box-sizing: border-box;
+    /* margin-top: 10px; -- This is now part of the flex layout */
+    /* max-height: 400px; -- Replaced by flex-grow */
 }
 
+/* Remove or comment out old list-based styles if no longer used */
+/*
 .history-list {
     list-style-type: none;
     padding: 0;
@@ -94,10 +109,62 @@ hr {
     margin-bottom: 0;
     padding-bottom: 0;
 }
+*/
+
+.history-items-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between cards */
+}
+
+.history-card {
+    background-color: var(--vscode-sideBar-background, var(--vscode-editorWidget-background)); /* Slightly different background for cards */
+    border: 1px solid var(--vscode-editorWidget-border);
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for card effect */
+}
 
 .prompt-section, .response-section {
-    margin-bottom: 5px;
+    margin-bottom: 8px; /* Adjusted margin for sections within a card */
+    /* position: relative; -- No longer needed here */
+    /* padding-right: 30px; -- No longer needed here */
 }
+
+.pre-wrapper {
+    position: relative; /* This will be the container for the copy button */
+    margin-top: 5px; /* Add some space between header and pre block */
+}
+
+.pre-wrapper pre {
+    /* The existing 'pre' styles will apply for background, padding, etc. */
+    /* Ensure padding on the pre block itself makes space for the button if needed, or adjust button position */
+    padding-right: 30px; /* Make space for the copy button inside the pre block's padding area */
+}
+
+.history-copy-button {
+    position: absolute;
+    top: 5px; /* Adjust to position nicely within the pre-wrapper, near the top-right of the pre */
+    right: 5px; /* Adjust to position nicely within the pre-wrapper, near the top-right of the pre */
+    background-color: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--vscode-icon-foreground);
+    z-index: 5;
+    margin: 0; /* Reset default button margins */
+}
+
+.history-copy-button:hover {
+    background-color: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.history-copy-button svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
 
 .prompt-section strong, .response-section strong {
     display: block;
@@ -131,7 +198,13 @@ pre {
 .tab-bar {
     display: flex;
     border-bottom: 1px solid var(--vscode-editorWidget-border);
-    margin-bottom: 15px;
+    flex-shrink: 0; /* Do not shrink */
+    background-color: var(--vscode-sideBar-background);
+    z-index: 20; /* Higher z-index */
+    padding: 10px; /* Apply padding here */
+    box-sizing: border-box;
+    width: 100%;
+    /* position:sticky and top:0 will be applied if body is the scroller, but here each tab content will scroll */
 }
 
 .tab-button {
@@ -158,18 +231,194 @@ pre {
 
 .tab-content {
     display: none; /* Hidden by default */
+    flex-grow: 1; /* Take remaining vertical space */
+    overflow: hidden; /* Important: child elements will handle their own scrolling */
+    padding: 10px;
+    box-sizing: border-box;
+    position: relative; /* For potential absolute children if needed by a specific tab */
 }
 
 .tab-content.active {
-    display: block; /* Shown when active */
+    display: flex; /* Use flex for active tab content */
+    flex-direction: column; /* Stack children vertically */
 }
 
-.output-margin {
-    margin-top: 30px;
-}
-
-.output-header {
+/* Enhance Tab Specific Layout */
+#enhanceTab.tab-content.active {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    /* The .tab-content already has padding: 10px and flex-grow: 1 */
+    /* This will be the container for both output and input */
+    /* The input area will be fixed at its bottom, output will scroll above it */
+    overflow: hidden; /* Prevent this container from scrolling; its children will */
+    position: relative; /* Needed for absolute/fixed positioning of children relative to this */
+}
+
+#promptOutputContainer {
+    /* This will now be the scrollable area for output */
+    overflow-y: auto;
+    position: relative; /* For copy button */
+    border: 1px solid var(--vscode-editorWidget-border);
+    border-radius: 3px;
+    background-color: var(--vscode-textCodeBlock-background, var(--vscode-editor-background));
+    padding: 8px;
+    /* flex-grow: 1; */ /* No longer flex-grow, its height is determined by space NOT taken by input area */
+    /* margin-bottom: 10px; */ /* Margin will be handled by padding on parent or fixed input position */
+    /* min-height: 50px; */
+    /* Calculate height: 100% of parent minus height of input area and parent's padding */
+    height: calc(100% - 75px); /* Approx: 65px for input area + 10px for margin/spacing */
+    margin-bottom: 65px; /* Space for the fixed input area at the bottom of #enhanceTab */
+}
+
+#promptOutput {
+    margin: 0; /* Remove default pre margin */
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: var(--vscode-editor-foreground);
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    /* Remove individual border/padding as parent #promptOutputContainer handles it */
+}
+
+#copyPromptOutput {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--vscode-icon-foreground);
+    z-index: 5; /* Ensure it's above the text */
+}
+
+#copyPromptOutput:hover {
+    background-color: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+
+#copyPromptOutput svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+#serverStatusContainer{
+    margin-top: 20px;
+}
+
+.prompt-input-area {
+    display: flex;
     align-items: center;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    padding: 5px 8px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    position: absolute; /* Fixed to the bottom of #enhanceTab */
+    bottom: 10px; /* Stays 10px from the bottom of #enhanceTab (which has 10px padding) */
+    left: 10px;   /* Stays 10px from the left of #enhanceTab (which has 10px padding) */
+    right: 10px;  /* Stays 10px from the right of #enhanceTab (which has 10px padding) */
+    width: calc(100% - 20px); /* Full width minus parent's horizontal padding */
+    z-index: 15;
+}
+
+.prompt-input-area textarea {
+    flex-grow: 1;
+    border: none; /* Remove individual border as parent has one */
+    padding: 8px 0; /* Adjust padding, remove horizontal padding as parent has it */
+    margin-right: 8px; /* Space between textarea and button */
+    margin-bottom: 0;
+    resize: none;
+    background-color: transparent; /* Make textarea background transparent */
+    color: var(--vscode-input-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    line-height: 1.4; /* Adjust line height for better text visibility */
+    max-height: 100px; /* Limit max height to prevent excessive expansion */
+    overflow-y: auto; /* Add scroll if content exceeds max-height */
+}
+
+.prompt-input-area textarea:focus {
+    outline: none; /* Remove focus outline */
+}
+
+.prompt-input-area button {
+    background-color: transparent;
+    border: none;
+    padding: 0; /* Remove padding as SVG has its own size */
+    cursor: pointer;
+    color: var(--vscode-icon-foreground);
+    display: flex; /* Align icon properly */
+    align-items: center; /* Align icon properly */
+    justify-content: center; /* Align icon properly */
+    width: 30px; /* Fixed width for the button */
+    height: 30px; /* Fixed height for the button */
+}
+
+.prompt-input-area button:hover {
+    background-color: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.prompt-input-area button svg {
+    width: 20px; /* Adjust icon size */
+    height: 20px; /* Adjust icon size */
+    fill: currentColor;
+}
+/* Remove the explicit padding-bottom from #enhanceTab.active as the layout is now different */
+/* #enhanceTab.tab-content.active {
+    padding-bottom: 0; 
+} */
+/* The margin-bottom on #promptOutputContainer creates the space for the fixed .prompt-input-area */
+
+
+/* History Tab Specific Layout */
+#historyTab.tab-content.active {
+    /* display: flex; flex-direction: column; is already set by .tab-content.active */
+}
+
+#historyTab > h2 { /* If h2 is inside historyTab */
+    flex-shrink: 0;
+}
+
+.history-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.history-controls input[type="text"] {
+    flex-grow: 1;
+    margin-bottom: 0; /* Remove default margin from input */
+    width: auto; /* Override the calc width for generic inputs */
+}
+
+.history-controls button#clearHistory {
+    flex-shrink: 0;
+    margin-bottom: 0; /* Remove default margin from button */
+    margin-top: 0; /* Reset margin from generic button style */
+    width: auto;
+    align-self: center; /* Align button with the input field */
+}
+
+
+#historyContainer {
+    flex-grow: 1; /* Takes all available vertical space in the flex column */
+    overflow-y: auto; /* Scrollable content */
+    border: 1px solid var(--vscode-editorWidget-border);
+    padding: 10px;
+    background-color: var(--vscode-editor-background);
+    width: 100%; /* Full width of parent (.tab-content which has padding) */
+    box-sizing: border-box;
+}
+
+#historyContainer .history-list .history-entry pre {
+    width: 100%; /* Make pre tags in history take full width */
+    box-sizing: border-box;
+}
+
+
+.hidden {
+    display: none !important; /* Ensure this overrides other display properties */
 }
